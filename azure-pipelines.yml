@@ -12,6 +12,35 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    displayName: 'dotnet build $(buildConfiguration)'
+    steps:
+    -  script: dotnet build --configuration $(buildConfiguration)
+    - task: CmdLine@2
+      displayName: 'dir debug'
+      inputs:
+        script: |
+          cd $(Build.ArtifactStagingDirectory)
+          dir /s /b
+  
+    - script: echo Build.SourcesDirectory = $(Build.SourcesDirectory)
+    - script: echo Build.ArtifactStagingDirectory = $(Build.ArtifactStagingDirectory)
+
+- stage: Provision
+  jobs:
+    - job: Provision1
+    - job: Provision2
+      dependsOn: Provision1
+      condition: succeeded('Provision2')
+    - deployment: DeployDevEnvironment
+      displayName: 'deploy code to dev environment'
+      dependsOn: Provions2
+      
+        
+
+
+
+    
